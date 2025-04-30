@@ -17,7 +17,7 @@ float playerX = 0.0f;
 const float playerY = -0.8f;
 const float playerWidth = 0.15f;
 const float playerHeight = 0.08f;
-const float playerSpeed = 0.08f;
+const float playerSpeed = 0.1f;
 
 struct Entity {
     float x, y, size;
@@ -25,8 +25,8 @@ struct Entity {
 };
 std::vector<Entity> entities;
 float entitySpeed = 0.01f;
-float spawnTimer = 0.0f;
-float spawnInterval = 1.0f;
+float spawnTimer = 0.2f;
+float spawnInterval = 0.5f;
 
 int score = 0;
 int highscore = 0;
@@ -116,6 +116,110 @@ void drawCar(float x, float y) {
     drawRect(x + bodyWidth * 0.3f, y + 0.11f, 0.01f, 0.015f, 1.0f, 1.0f, 0.6f);
 }
 
+void drawFuelTank(float x, float y, float size) {
+    // Dimensions
+    float tankWidth = size * 0.8f;
+    float tankHeight = size * 1.2f;
+    float pipeWidth = size * 0.12f;
+    float pipeLength = size * 0.6f;
+    float capSize = size * 0.2f;
+
+    // Main tank body (red gallon)
+    drawRect(x - tankWidth / 2.0f, y - tankHeight / 2.0f,
+        tankWidth, tankHeight, 0.8f, 0.1f, 0.1f); // bright red
+
+    // Fuel cap (dark gray)
+    float capX = x - tankWidth / 2.0f + capSize / 2.0f;
+    float capY = y - tankHeight / 2.0f + capSize / 2.0f;
+    drawRect(capX - capSize / 2.0f, capY - capSize / 2.0f,
+        capSize, capSize, 0.3f, 0.3f, 0.3f); // darker gray cap
+
+    // Pipe/hose on right side (green hose)
+    //float pipeX = x + tankWidth / 2.0f;
+    float pipeX = x - tankWidth / 2.0f;
+
+    float pipeY = y;
+    drawRect(pipeX, pipeY - pipeWidth / 2.0f,
+        pipeLength, pipeWidth, 0.2f, 0.6f, 0.2f); // green pipe
+
+    // Fuel level indicator (optional)
+    float fuelLevel = 0.65f;
+    float fuelBarHeight = tankHeight * fuelLevel;
+    float fuelBarWidth = size * 0.06f;
+    drawRect(x - tankWidth / 2.0f + fuelBarWidth,
+        y + fuelBarHeight / 2.0f - tankHeight / 2.0f,
+        fuelBarWidth, fuelBarHeight, 1.0f, 1.0f, 0.2f); // yellowish bar
+}
+
+void drawHighwayCone(float x, float y, float size) {
+    // Radii for each layer (top-down stack)
+    float baseRadius = size * 0.6f;
+    float midRadius1 = size * 0.45f;
+    float stripeRadius = size * 0.35f;
+    float midRadius2 = size * 0.27f;
+    float topRadius = size * 0.18f;
+    float capRadius = size * 0.09f;
+
+    // Base cone color
+    float orangeR = 1.0f, orangeG = 0.5f, orangeB = 0.0f;
+
+    // Bottom base (darkest orange)
+    drawCircle(x, y, baseRadius, orangeR * 0.7f, orangeG * 0.4f, orangeB * 0.2f);
+
+    // Mid layer 1 (lighter orange)
+    drawCircle(x, y, midRadius1, orangeR * 0.85f, orangeG * 0.6f, orangeB * 0.3f);
+
+    // White reflective stripe
+    drawCircle(x, y, stripeRadius, 1.0f, 1.0f, 1.0f);
+
+    // Mid layer 2 (brighter orange)
+    drawCircle(x, y, midRadius2, orangeR * 0.95f, orangeG * 0.7f, orangeB * 0.4f);
+
+    // Top layer (pure orange)
+    drawCircle(x, y, topRadius, orangeR, orangeG, orangeB);
+
+    // Dark center cap (shadow)
+    drawCircle(x, y, capRadius, 0.2f, 0.1f, 0.0f);
+
+    // Optional: small highlight to simulate gloss
+    drawCircle(x + topRadius * 0.3f, y - topRadius * 0.3f, topRadius * 0.2f, 1.0f, 1.0f, 1.0f);
+}
+
+void drawObstacleBarricade(float x, float y, float size) {
+    // Main body size
+    float width = size * 1.5f;
+    float height = size * 0.5f;
+    float stripeWidth = width / 5.0f; // Five stripes
+
+    // Background of the barricade (dark gray frame)
+    //drawRect(x - width / 2.0f, y - height / 2.0f, width, height, 0.2f, 0.2f, 0.2f);
+
+    // Draw vertical orange-white stripes
+    for (int i = 0; i < 5; i++) {
+        float stripeX = x - width / 2.0f + i * stripeWidth;
+
+        // Alternate colors: orange and white
+        if (i % 2 == 0) {
+            drawRect(stripeX, y - height / 2.0f, stripeWidth, height, 1.0f, 0.5f, 0.0f); // orange
+        }
+        else {
+            drawRect(stripeX, y - height / 2.0f, stripeWidth, height, 1.0f, 1.0f, 1.0f); // white
+        }
+    }
+
+    // Legs (underneath the barricade)
+    float legWidth = size * 0.15f;
+    float legHeight = size * 0.4f;
+    float legOffset = width * 0.3f;
+    float legY = y + height / 2.0f + legHeight / 2.0f; // placed below the barricade
+
+    // Left leg
+    drawRect(x - legOffset - legWidth / 2.0f, legY, legWidth, legHeight, 0.3f, 0.3f, 0.3f);
+
+    // Right leg
+    drawRect(x + legOffset - legWidth / 2.0f, legY, legWidth, legHeight, 0.3f, 0.3f, 0.3f);
+}
+
 
 void display() {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -125,11 +229,17 @@ void display() {
     drawHighwayLines();
     drawCar(playerX, playerY);
 
+    // Main function to replace the original drawing code
     for (const auto& e : entities) {
-        if (e.isCoin)
-            drawCircle(e.x, e.y, e.size / 2.0f, 1.0f, 0.9f, 0.1f);
-        else
-            drawRect(e.x, e.y, e.size, e.size, 1.0f, 0.2f, 0.2f);
+        if (e.isCoin) {
+            // Draw fuel tank instead of circle
+            drawFuelTank(e.x, e.y, e.size);
+        }
+        else {
+            // Draw highway cone instead of rectangle
+            //drawHighwayCone(e.x, e.y, e.size);
+            drawObstacleBarricade(e.x, e.y, e.size);
+        }
     }
 
     drawText(-0.98f, 0.92f, "Score: " + std::to_string(score));
